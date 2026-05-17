@@ -29,7 +29,8 @@ project/
 
 # What this is
 
-- Guided conversational flowNot a chatbot — controlled step by stepBackend-driven recommendation engineLogic lives in Python, AI just narrates
+- Guided conversational flowNot a chatbot — controlled step by step
+- Backend-driven recommendation engine Logic lives in Python, AI just narrates
 - Hallucination preventionAI never calculates — only speaks backend results
 - Graceful degradationApp works even when Gemini rate limit hits
 - Rule-based gram/pack logicAssignment requirement — fully implemented

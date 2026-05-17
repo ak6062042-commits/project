@@ -168,8 +168,8 @@ class FAQRequest(BaseModel):
 @app.post("/faq", summary="Objection handling and FAQ responses")
 async def faq(req: FAQRequest):
     hardcoded = getFaqResponse(req.question)
-    if hardcoded:
-        return {"response": hardcoded, "source": "faq"}
+    #if hardcoded:
+        #return {"response": hardcoded, "source": "faq"}
 
     prompt = f"""
     A customer is asking a question about hair extensions.
