@@ -1,0 +1,9 @@
+[
+  { "method": "keratin", "length_cm": 40, "grams_per_pack": 25, "price_nok": 450 },
+  { "method": "keratin", "length_cm": 50, "grams_per_pack": 25, "price_nok": 490 },
+  { "method": "keratin", "length_cm": 60, "grams_per_pack": 25, "price_nok": 530 },
+  { "method": "tape",    "length_cm": 40, "grams_per_pack": 25, "price_nok": 380 },
+  { "method": "tape",    "length_cm": 50, "grams_per_pack": 25, "price_nok": 420 },
+  { "method": "tape",    "length_cm": 60, "grams_per_pack": 25, "price_nok": 460 }
+]
+
