@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 from logic import buildRecommendations, suggestAddons
-from prompts import SYSTEM_PROMPT, buildUserPrompt
+from prompts import SYSTEM_PROMPT, buildUserPrompt, getFaqResponse
 
 load_dotenv()
 
@@ -160,3 +160,27 @@ def booking(req: BookingRequest):
 def get_addons():
     from logic import ADDONS
     return {"addons": ADDONS}
+
+class FAQRequest(BaseModel):
+    question: str
+    recommendation: Optional[dict] = None
+
+@app.post("/faq", summary="Objection handling and FAQ responses")
+async def faq(req: FAQRequest):
+    hardcoded = getFaqResponse(req.question)
+    if hardcoded:
+        return {"response": hardcoded, "source": "faq"}
+
+    prompt = f"""
+    A customer is asking a question about hair extensions.
+    Answer in max 2-3 lines. Be confident and reassuring.
+    Question: "{req.question}"
+    """
+    try:
+        ai_text = getGeminiResponse(prompt)
+        return {"response": ai_text, "source": "ai"}
+    except Exception:
+        return {
+            "response": "Great question — feel free to contact us directly and our stylists will help you.",
+            "source": "fallback"
+        }

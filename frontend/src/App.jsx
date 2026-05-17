@@ -1,3 +1,4 @@
+import FAQSection from './components/FAQSection'
 import { useState } from 'react'
 import { getChatResponse, getRecommendation } from './api/stylist'
 import StepCard from './components/StepCard'
@@ -171,24 +172,25 @@ async function handleSelect(value) {
             stylistResponse={result.stylist_response}
             formData={answers}
           />
-          <button
-            onClick={handleRestart}
-            style={{
-              marginTop: '16px',
-              width: '100%',
-              background: 'transparent',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-              padding: '12px',
-              borderRadius: '8px',
-              fontSize: '0.85rem',
-              letterSpacing: '0.05em'
-            }}
-          >
-            Start Over
-          </button>
-        </>
-      )}
+        <FAQSection />
+        <button
+          onClick={handleRestart}
+          style={{
+          marginTop: '16px',
+          width: '100%',
+          background: 'transparent',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
+          padding: '12px',
+          borderRadius: '8px',
+          fontSize: '0.85rem',
+          letterSpacing: '0.05em'
+        }}
+      >
+        Start Over
+      </button>
+    </>
+  )}
     </div>
   )
 }
