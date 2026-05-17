@@ -26,3 +26,13 @@ project/
 - uvicorn main:app --reload
 - cd frontend
 - npm run dev
+
+# What this is
+
+- Guided conversational flowNot a chatbot — controlled step by stepBackend-driven recommendation engineLogic lives in Python, AI just narrates
+- Hallucination preventionAI never calculates — only speaks backend results
+- Graceful degradationApp works even when Gemini rate limit hits
+- Rule-based gram/pack logicAssignment requirement — fully implemented
+- Modular architecturelogic.py / prompts.py / main.py all separate concerns
+- Swagger API documentationAuto-generated at /docs
+- Scalable for Phase 2 Ready for image upload, RAG, more products
