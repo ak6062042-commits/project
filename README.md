@@ -2,24 +2,35 @@
 # SAlOON SALES REPRESENATATIVE
 
 
-project/
-├── backend/
-│   ├── main.py        ← /recommend /chat /faq /cart /booking /addons
-│   ├── logic.py       ← all calculation logic
-│   ├── prompts.py     ← system prompt + FAQ responses
-│   ├── products.json  ← product catalogue
-│   └── .env           ← GEMINI_API_KEY
-└── frontend/
-    └── src/
-        ├── components/
-        │   ├── StepCard.jsx       ← question cards
-        │   ├── ResultCard.jsx     ← recommendation output
-        │   ├── LoadingScreen.jsx  ← animated loading
-        │   └── FAQSection.jsx     ← objection handling
-        ├── api/
-        │   └── stylist.js         ← all API calls
-        ├── App.jsx                ← guided flow controller
-        └── index.css              ← dark/gold theme
+backend/
+├── main.py
+├── logic.py
+├── prompts.py
+├── ai.py
+├── models.py
+├── products.json
+├── requirements.txt
+├── .env
+└── chat_memory.py
+
+frontend/src/
+├── api/
+│   └── stylist.js
+├── components/
+│   ├── StepCard.jsx
+│   ├── ResultCard.jsx
+│   ├── LoadingScreen.jsx
+│   ├── FAQSection.jsx
+│   ├── FollowUpChat.jsx
+│   ├── ProgressBar.jsx
+│   ├── PriceCard.jsx
+│   └── StatusMessage.jsx
+├── utils/
+│   └── session.js
+├── App.jsx
+├── index.css
+└── main.jsx
+
 
 # HOW TO RUN
 - cd backend
@@ -37,3 +48,5 @@ project/
 - Modular architecturelogic.py / prompts.py / main.py all separate concerns
 - Swagger API documentationAuto-generated at /docs
 - Scalable for Phase 2 Ready for image upload, RAG, more products
+
+resultcard and faqquestion and app.jsx

@@ -1,151 +1,210 @@
-import { addToCart, submitBooking } from '../api/stylist'
 import { useState } from 'react'
 
-export default function ResultCard({ recommendation, stylistResponse, formData }) {
+import {
+  addToCart,
+  submitBooking
+} from '../api/stylist'
+
+import FollowUpChat from './FollowUpChat'
+import PriceCard from './PriceCard'
+import StatusMessage from './StatusMessage'
+
+export default function ResultCard({
+  recommendation,
+  stylistResponse,
+  formData
+}) {
+
   const [status, setStatus] = useState(null)
+
   const r = recommendation
 
   async function handleCart() {
-    await addToCart({
-      method: r.method,
-      desired_length_cm: r.desired_length,
-      grams: r.grams,
-      packs: r.packs,
-      addon_ids: r.addons.map(a => a.id)
-    })
-    setStatus('cart')
+
+    try {
+
+      await addToCart({
+        method: r.method,
+        desired_length_cm: r.desired_length,
+        grams: r.grams,
+        packs: r.packs,
+        addon_ids: r.addons.map(a => a.id)
+      })
+
+      setStatus('cart')
+
+    } catch (e) {
+
+      console.error(e)
+    }
   }
 
   async function handleBooking() {
-    await submitBooking({
-      name: 'Guest',
-      email: 'guest@example.com',
-      notes: `${r.method} ${r.desired_length}cm`
-    })
-    setStatus('booked')
+
+    try {
+
+      await submitBooking({
+        name: 'Guest',
+        email: 'guest@example.com',
+        notes:
+          `${r.method} ${r.desired_length}cm`
+      })
+
+      setStatus('booked')
+
+    } catch (e) {
+
+      console.error(e)
+    }
   }
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--gold-dim)',
-      borderRadius: '12px',
-      padding: '32px',
-    }}>
-      <p style={{
-        color: 'var(--gold)',
-        fontSize: '0.75rem',
-        letterSpacing: '0.15em',
-        textTransform: 'uppercase',
-        marginBottom: '16px'
-      }}>
+    <div className="card">
+
+      <p className="section-label">
         Your Recommendation
       </p>
 
-      <p style={{
-        color: 'var(--text)',
-        fontSize: '1rem',
-        lineHeight: '1.7',
-        marginBottom: '28px',
-        fontStyle: 'italic'
-      }}>
+      <p className="stylist-response">
         "{stylistResponse}"
       </p>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '12px',
-        marginBottom: '28px'
-      }}>
+      <div className="recommendation-badge">
+
+        {r.salon_booking
+          ? 'Salon Professional Recommended'
+          : 'DIY Friendly Application'}
+
+      </div>
+
+      <div className="result-grid">
+
         {[
-          { label: 'Method', value: r.method.charAt(0).toUpperCase() + r.method.slice(1) },
-          { label: 'Length', value: `${r.desired_length} cm` },
-          { label: 'Amount', value: `${r.grams}g` },
-          { label: 'Packs', value: `${r.packs} packs` },
+          {
+            label: 'Method',
+            value:
+              r.method.charAt(0).toUpperCase()
+              + r.method.slice(1)
+          },
+
+          {
+            label: 'Length',
+            value:
+              `${r.desired_length} cm`
+          },
+
+          {
+            label: 'Amount',
+            value:
+              `${r.grams}g`
+          },
+
+          {
+            label: 'Packs',
+            value:
+              `${r.packs} packs`
+          },
+
         ].map(item => (
-          <div key={item.label} style={{
-            background: 'var(--surface-2)',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            padding: '14px 16px'
-          }}>
-            <p style={{ fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
+
+          <div
+            key={item.label}
+            className="result-item"
+          >
+
+            <p className="result-label">
               {item.label}
             </p>
-            <p style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 500 }}>
+
+            <p className="result-value">
               {item.value}
             </p>
+
           </div>
+
         ))}
+
       </div>
 
       {r.addons?.length > 0 && (
-        <div style={{ marginBottom: '28px' }}>
-          <p style={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
+
+        <div className="addons-wrapper">
+
+          <p className="addons-title">
             Recommended Add-ons
           </p>
+
           {r.addons.map(a => (
-            <div key={a.id} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '8px 0',
-              borderBottom: '1px solid var(--border)',
-              fontSize: '0.9rem'
-            }}>
-              <span style={{ color: 'var(--text)' }}>{a.name}</span>
-              <span style={{ color: 'var(--gold)' }}>{a.price_nok} NOK</span>
+
+            <div
+              key={a.id}
+              className="addon-row"
+            >
+
+              <span>
+                {a.name}
+              </span>
+
+              <span className="gold-text">
+                {a.price_nok} NOK
+              </span>
+
             </div>
+
           ))}
+
         </div>
+
       )}
 
       {r.total_price_nok && (
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '24px' }}>
-          Estimated total: <span style={{ color: 'var(--gold)' }}>{r.total_price_nok} NOK</span>
-        </p>
+        <PriceCard
+          total={r.total_price_nok}
+        />
       )}
 
       {status === 'cart' && (
-        <p style={{ color: 'var(--gold)', fontSize: '0.9rem', marginBottom: '16px' }}>
-          ✓ Added to cart
-        </p>
-      )}
-      {status === 'booked' && (
-        <p style={{ color: 'var(--gold)', fontSize: '0.9rem', marginBottom: '16px' }}>
-          ✓ Booking request sent
-        </p>
+        <StatusMessage
+          type="success"
+          message="✓ Added to cart"
+        />
       )}
 
-      <div style={{ display: 'flex', gap: '12px' }}>
+      {status === 'booked' && (
+        <StatusMessage
+          type="success"
+          message="✓ Booking request sent"
+        />
+      )}
+
+      <div className="action-buttons">
+
         {r.salon_booking ? (
-          <button onClick={handleBooking} style={{
-            flex: 1,
-            background: 'var(--gold)',
-            color: 'var(--black)',
-            padding: '14px',
-            borderRadius: '8px',
-            fontWeight: 500,
-            fontSize: '0.9rem',
-            letterSpacing: '0.05em'
-          }}>
+
+          <button
+            onClick={handleBooking}
+            className="gold-btn"
+          >
             Book Salon
           </button>
+
         ) : (
-          <button onClick={handleCart} style={{
-            flex: 1,
-            background: 'var(--gold)',
-            color: 'var(--black)',
-            padding: '14px',
-            borderRadius: '8px',
-            fontWeight: 500,
-            fontSize: '0.9rem',
-            letterSpacing: '0.05em'
-          }}>
+
+          <button
+            onClick={handleCart}
+            className="gold-btn"
+          >
             Add to Cart
           </button>
+
         )}
+
       </div>
+
+      <FollowUpChat
+        formData={formData}
+      />
+
     </div>
   )
 }

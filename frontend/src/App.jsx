@@ -1,9 +1,17 @@
-import FAQSection from './components/FAQSection'
 import { useState } from 'react'
-import { getChatResponse, getRecommendation } from './api/stylist'
+
+import {
+  getChatResponse,
+  getRecommendation
+} from './api/stylist'
+
+import { getSessionId } from './utils/session'
+
 import StepCard from './components/StepCard'
 import ResultCard from './components/ResultCard'
 import LoadingScreen from './components/LoadingScreen'
+import FAQSection from './components/FAQSection'
+import ProgressBar from './components/ProgressBar'
 
 const STEPS = [
   {
@@ -15,6 +23,7 @@ const STEPS = [
       { label: 'Both', value: 'both' },
     ]
   },
+
   {
     key: 'hair_type',
     question: 'What is your hair type?',
@@ -24,15 +33,28 @@ const STEPS = [
       { label: 'Thick', value: 'thick' },
     ]
   },
+
   {
     key: 'current_length',
     question: 'How long is your hair now?',
     options: [
-      { label: 'Short (above shoulders)', value: 'short' },
-      { label: 'Medium (shoulder length)', value: 'medium' },
-      { label: 'Long (below shoulders)', value: 'long' },
+      {
+        label: 'Short (above shoulders)',
+        value: 'short'
+      },
+
+      {
+        label: 'Medium (shoulder length)',
+        value: 'medium'
+      },
+
+      {
+        label: 'Long (below shoulders)',
+        value: 'long'
+      },
     ]
   },
+
   {
     key: 'desired_length_cm',
     question: 'What length do you want?',
@@ -42,6 +64,7 @@ const STEPS = [
       { label: '60 cm', value: 60 },
     ]
   },
+
   {
     key: 'location',
     question: 'Where are you located?',
@@ -54,92 +77,139 @@ const STEPS = [
 ]
 
 export default function App() {
+
   const [step, setStep] = useState(0)
+
   const [answers, setAnswers] = useState({})
+
   const [loading, setLoading] = useState(false)
+
   const [result, setResult] = useState(null)
+
   const [error, setError] = useState(null)
 
-async function handleSelect(value) {
-  const currentKey = STEPS[step].key
-  const updatedAnswers = { ...answers, [currentKey]: value }
-  setAnswers(updatedAnswers)
+  async function handleSelect(value) {
 
-  if (step < STEPS.length - 1) {
-    setStep(step + 1)
-  } else {
+    const currentKey = STEPS[step].key
+
+    const updatedAnswers = {
+      ...answers,
+      [currentKey]: value
+    }
+
+    setAnswers(updatedAnswers)
+
+    if (step < STEPS.length - 1) {
+
+      setStep(prev => prev + 1)
+
+      return
+    }
+
     setLoading(true)
+
     setError(null)
+
     try {
+
       const response = await getChatResponse({
         ...updatedAnswers,
-        user_message: 'What do you recommend for me?'
+        user_message:
+          'What do you recommend for me?',
+        session_id: getSessionId()
       })
+
       setResult(response)
+
     } catch (e) {
-      // Gemini rate limit hit — try /recommend only as last fallback
+
+      console.error(
+        e.response?.data ||
+        e.message ||
+        e
+      )
+
       try {
-        const fallback = await getRecommendation(updatedAnswers)
+
+        const fallback =
+          await getRecommendation(updatedAnswers)
+
         setResult({
           recommendation: fallback,
+
           stylist_response:
-            `${fallback.method.charAt(0).toUpperCase() + fallback.method.slice(1)} extensions are the right choice for your hair. ` +
-            `You need ${fallback.grams}g — that's ${fallback.packs} packs at ${fallback.desired_length}cm. ` +
-            (fallback.salon_booking
-              ? 'Since you are near Oslo, I recommend booking a salon appointment.'
-              : 'These are easy to apply at home.')
+            `${fallback.method
+              .charAt(0)
+              .toUpperCase()
+            + fallback.method.slice(1)} `
+            +
+            `extensions are the best choice for your hair. `
+            +
+            `You'll need ${fallback.grams}g `
+            +
+            `(${fallback.packs} packs).`
         })
-      } catch {
-        setError('Something went wrong. Please wait a moment and try again.')
+
+      } catch (fallbackError) {
+
+        console.error(
+          fallbackError.response?.data ||
+          fallbackError.message ||
+          fallbackError
+        )
+
+        setError(
+          'Something went wrong. Please try again.'
+        )
       }
+
     } finally {
+
       setLoading(false)
     }
   }
-}
 
   function handleRestart() {
+
     setStep(0)
+
     setAnswers({})
+
     setResult(null)
+
     setError(null)
   }
 
   return (
     <div>
-      <div style={{ marginBottom: '40px', paddingBottom: '24px', borderBottom: '1px solid var(--border)' }}>
-        <h1>EXTENSIONS</h1>
-        <p style={{ marginTop: '8px', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+
+      <div className="hero-section">
+
+        <h1>
+          EXTENSIONS
+        </h1>
+
+        <p className="hero-subtitle">
           Guided stylist consultation
         </p>
+
       </div>
 
       {!loading && !result && (
-        <>
-          <div style={{
-            display: 'flex',
-            gap: '6px',
-            marginBottom: '32px'
-          }}>
-            {STEPS.map((_, i) => (
-              <div key={i} style={{
-                flex: 1,
-                height: '2px',
-                background: i <= step ? 'var(--gold)' : 'var(--border)',
-                borderRadius: '2px',
-                transition: 'background 0.3s ease'
-              }} />
-            ))}
-          </div>
 
-          <p style={{
-            fontSize: '0.75rem',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: 'var(--gold-dim)',
-            marginBottom: '20px'
-          }}>
-            Step {step + 1} of {STEPS.length}
+        <>
+
+          <ProgressBar
+            step={step}
+            total={STEPS.length}
+          />
+
+          <p className="step-indicator">
+            Step {step + 1}
+            {' '}
+            of
+            {' '}
+            {STEPS.length}
           </p>
 
           <StepCard
@@ -147,50 +217,48 @@ async function handleSelect(value) {
             options={STEPS[step].options}
             onSelect={handleSelect}
           />
+
         </>
+
       )}
 
-      {loading && <LoadingScreen />}
+      {loading && (
+        <LoadingScreen />
+      )}
 
       {error && (
-        <div style={{
-          background: 'var(--surface)',
-          border: '1px solid #8b2020',
-          borderRadius: '12px',
-          padding: '24px',
-          color: '#e07070',
-          marginBottom: '16px'
-        }}>
+
+        <div className="error-card">
           {error}
         </div>
+
       )}
 
       {result && (
+
         <>
+
           <ResultCard
             recommendation={result.recommendation}
-            stylistResponse={result.stylist_response}
+            stylistResponse={
+              result.stylist_response
+            }
             formData={answers}
           />
-        <FAQSection />
-        <button
-          onClick={handleRestart}
-          style={{
-          marginTop: '16px',
-          width: '100%',
-          background: 'transparent',
-          border: '1px solid var(--border)',
-          color: 'var(--text-muted)',
-          padding: '12px',
-          borderRadius: '8px',
-          fontSize: '0.85rem',
-          letterSpacing: '0.05em'
-        }}
-      >
-        Start Over
-      </button>
-    </>
-  )}
+
+          <FAQSection />
+
+          <button
+            onClick={handleRestart}
+            className="restart-btn"
+          >
+            Start Over
+          </button>
+
+        </>
+
+      )}
+
     </div>
   )
 }

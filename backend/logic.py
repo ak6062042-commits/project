@@ -1,7 +1,12 @@
 from math import ceil
 from json import load
+import os
 
-SALON_LOCATIONS = ["oslo", "lillestrøm", "lillestrøm", "lørenskong"]
+SALON_LOCATIONS = [
+    "oslo",
+    "lillestrøm",
+    "lørenskog"
+]
 
 ADDONS = [
     {"id": "heat_protection", "name": "Heat Protection Spray", "price_nok": 199},
@@ -10,81 +15,116 @@ ADDONS = [
     {"id": "silky_cap", "name": "Silk Cap", "price_nok": 99}
 ]
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PRODUCT_PATH = os.path.join(BASE_DIR, "products.json")
+
+
 def calculateGrams(goal: str, hair_type: str) -> int:
-    goal = goal.lower()
     hair_type = hair_type.lower()
-    
+    goal = goal.lower()
+
     if hair_type == "thin":
         return 125 if goal == "volume" else 175
-    elif hair_type == "medium":
+
+    if hair_type == "medium":
         return 175
-    elif hair_type == "thick":
+
+    if hair_type == "thick":
         return 225
+
     return 175
 
-def calculatePacks(grams: int, grams_per_pack: int = 25) -> int:
+
+def calculatePacks(grams: int, grams_per_pack: int = 25):
     return ceil(grams / grams_per_pack)
 
-def recommendMethod(hair_type: str, location: str) -> dict:
+
+def recommendMethod(location: str):
     is_local = location.lower() in SALON_LOCATIONS
-    
+
     if is_local:
         return {
-            "method" : "keratin",
-            "salon_booking" : True,
-            "reason": "Keratin is the safest, most natural method for your hair type."
-        }
-    else:
-        return{
-            "method" : "keratin",
-            "salon_booking": False,
-            "reason": "Tape extensions are most easy to apply yourself for remote customers."
+            "method": "keratin",
+            "salon_booking": True,
+            "reason":
+                "Keratin gives the most natural and long-lasting salon result."
         }
 
-def getProduct(method: str, desired_length_cm: int) -> dict:
-    import os
-    
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(BASE_DIR, "products.json")
-    with open(path) as f:
+    return {
+        "method": "tape",
+        "salon_booking": False,
+        "reason":
+            "Tape extensions are easier for at-home application."
+    }
+
+
+def getProduct(method: str, desired_length_cm: int):
+    with open(PRODUCT_PATH, encoding="utf-8") as f:
         products = load(f)
-    
-    for p in products:
-        if p["method"] == method and p["length_cm"] == desired_length_cm:
-            return p
-    
-    candidates = [p for p in products if p["method"] == method
-                  and p["length_cm"] >= desired_length_cm]
+
+    exact = [
+        p for p in products
+        if p["method"] == method
+        and p["length_cm"] == desired_length_cm
+    ]
+
+    if exact:
+        return exact[0]
+
+    candidates = [
+        p for p in products
+        if p["method"] == method
+        and p["length_cm"] >= desired_length_cm
+    ]
+
     return candidates[0] if candidates else None
 
-def suggestAddons(method: str) -> list:
+
+def suggestAddons(method: str):
     suggestions = ["heat_protection", "brush"]
+
     if method == "keratin":
         suggestions.append("remover")
-    return [a for a in ADDONS if a["id"] in suggestions]
+
+    return [
+        addon for addon in ADDONS
+        if addon["id"] in suggestions
+    ]
+
 
 def buildRecommendations(
-    goal: str, hair_type: str,
-    current_length: str, desired_length_cm: int,
-    location: str
-) -> dict:
+    goal,
+    hair_type,
+    current_length,
+    desired_length_cm,
+    location
+):
     grams = calculateGrams(goal, hair_type)
+
     packs = calculatePacks(grams)
-    method_info = recommendMethod(hair_type, location)
-    product = getProduct(method_info["method"], desired_length_cm)
+
+    method_info = recommendMethod(location)
+
+    product = getProduct(
+        method_info["method"],
+        desired_length_cm
+    )
+
     addons = suggestAddons(method_info["method"])
-    
-    total_price = (product["price_nok"] * packs) if product else None
+
+    total_price = (
+        product["price_nok"] * packs
+        if product else None
+    )
+
     return {
-        "method":          method_info["method"],
-        "salon_booking":   method_info["salon_booking"],
-        "method_reason":   method_info["reason"],
-        "grams":           grams,
-        "packs":           packs,
-        "desired_length":  desired_length_cm,
-        "product":         product,
+        "method": method_info["method"],
+        "salon_booking": method_info["salon_booking"],
+        "method_reason": method_info["reason"],
+        "grams": grams,
+        "packs": packs,
+        "desired_length": desired_length_cm,
+        "product": product,
         "total_price_nok": total_price,
-        "addons":          addons,
+        "addons": addons
     }
-    
-        
