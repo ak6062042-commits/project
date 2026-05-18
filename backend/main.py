@@ -1,48 +1,91 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from models import *
-from logic import *
-from prompts import *
-from ai import generateResponse
-from chat_memory import addMessage, getHistory
+from logic import (
+    buildRecommendations,
+    ADDONS
+)
 
-app = FastAPI()
+from prompts import (
+    buildUserPrompt,
+    getFaqResponse
+)
+
+from ai import generateResponse
+
+from models import (
+    RecommendRequest,
+    ChatRequest,
+    FAQRequest,
+    CartItem,
+    BookingRequest
+)
+
+from chat_memory import (
+    addMessage,
+    buildConversationString
+)
+
+
+app = FastAPI(
+    title="Hair Extension Stylist API",
+    version="3.0.0"
+)
 
 app.add_middleware(
     CORSMiddleware,
+
     allow_origins=["*"],
+
     allow_credentials=True,
+
     allow_methods=["*"],
+
     allow_headers=["*"],
 )
 
 cart_store = []
 
 
+def buildFallbackResponse(r: dict):
+
+    method = r["method"].capitalize()
+
+    return (
+        f"{method} extensions would suit your hair perfectly. "
+        f"You'll need around {r['grams']}g "
+        f"({r['packs']} packs) at "
+        f"{r['desired_length']}cm."
+    )
+
+
 @app.get("/")
 def root():
+
     return {
-        "message": "Hair Stylist API running"
+        "message":
+        "API running successfully"
     }
 
 
 @app.post("/recommend")
-def recommend(req: RecommendRequest):
+def recommend(
+    req: RecommendRequest
+):
 
-    recommendation = buildRecommendations(
+    return buildRecommendations(
         req.goal,
         req.hair_type,
         req.current_length,
         req.desired_length_cm,
         req.location
     )
-
-    return recommendation
 
 
 @app.post("/chat")
-def chat(req: ChatRequest):
+async def chat(
+    req: ChatRequest
+):
 
     recommendation = buildRecommendations(
         req.goal,
@@ -52,119 +95,144 @@ def chat(req: ChatRequest):
         req.location
     )
 
-    history = getHistory(req.session_id)
+    history = buildConversationString(
+        req.session_id
+    )
 
-    context = f"""
-Recommendation:
-{recommendation}
+    user_prompt = buildUserPrompt(
+        recommendation,
+        req.user_message
+    )
 
+    final_prompt = f"""
 Conversation history:
 {history}
 
-User:
-{req.user_message}
+Current request:
+{user_prompt}
 """
 
     try:
-        ai_response = generateResponse(context)
 
-    except Exception:
-        ai_response = (
-            f"{recommendation['method'].capitalize()} "
-            f"extensions are perfect for you. "
-            f"You'll need {recommendation['grams']}g "
-            f"({recommendation['packs']} packs)."
+        response = generateResponse(
+            final_prompt
         )
 
-    addMessage(req.session_id, "user", req.user_message)
-    addMessage(req.session_id, "assistant", ai_response)
+    except Exception:
+
+        response = buildFallbackResponse(
+            recommendation
+        )
+
+    addMessage(
+        req.session_id,
+        "user",
+        req.user_message
+    )
+
+    addMessage(
+        req.session_id,
+        "assistant",
+        response
+    )
 
     return {
-        "recommendation": recommendation,
-        "stylist_response": ai_response,
-        "history": getHistory(req.session_id)
+        "recommendation":
+        recommendation,
+
+        "stylist_response":
+        response
     }
 
 
 @app.post("/faq")
-def faq(req: FAQRequest):
+async def faq(
+    req: FAQRequest
+):
 
-    q = req.question.lower()
+    hardcoded = getFaqResponse(
+        req.question
+    )
 
-    faq_map = {
-        "damage":
-            "No — keratin is very safe when professionally applied.",
+    if hardcoded:
 
-        "natural":
-            "Yes — the bonds are nearly invisible and blend naturally.",
+        return {
+            "response": hardcoded,
+            "source": "faq"
+        }
 
-        "wash":
-            "Yes, absolutely. Sulfate-free shampoo is recommended.",
+    prompt = f"""
+Customer question:
+{req.question}
 
-        "pain":
-            "No — the application is gentle and painless.",
-
-        "long":
-            "Keratin usually lasts 3–5 months with proper care."
-    }
-
-    for key, value in faq_map.items():
-        if key in q:
-            return {
-                "response": value,
-                "source": "faq"
-            }
+Reply naturally in 2-3 lines.
+"""
 
     try:
-        ai_response = generateResponse(
-            f"Answer shortly as stylist: {req.question}"
+
+        response = generateResponse(
+            prompt
         )
 
         return {
-            "response": ai_response,
+            "response": response,
             "source": "ai"
         }
 
-    except Exception as e:
-        print(e)
+    except Exception:
 
         return {
             "response":
-                "Our stylists will gladly help you personally.",
+            "Our stylists would be happy to help you personally.",
             "source": "fallback"
         }
 
 
 @app.post("/cart/add")
-def cartAdd(item: CartItem):
+def add_to_cart(
+    item: CartItem
+):
 
-    cart_store.append(item.dict())
+    cart_store.append(
+        item.dict()
+    )
 
     return {
-        "message": "Added to cart",
-        "cart": cart_store
+        "message":
+        "Added to cart.",
+
+        "cart":
+        cart_store
     }
 
 
 @app.get("/cart")
-def cartView():
+def view_cart():
+
     return {
-        "cart": cart_store
+        "cart":
+        cart_store
     }
 
 
 @app.post("/booking")
-def booking(req: BookingRequest):
+def booking(
+    req: BookingRequest
+):
 
     return {
         "message":
-            "Booking request received successfully.",
-        "booking": req.dict()
+        "Booking request received.",
+
+        "booking":
+        req.dict()
     }
 
 
 @app.get("/addons")
 def addons():
+
     return {
-        "addons": ADDONS
+        "addons":
+        ADDONS
     }

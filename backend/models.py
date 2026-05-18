@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class RecommendRequest(BaseModel):
     goal: str
     hair_type: str
@@ -9,7 +10,9 @@ class RecommendRequest(BaseModel):
     location: str
 
 
-class ChatRequest(RecommendRequest):
+class ChatRequest(
+    RecommendRequest
+):
     user_message: str
     session_id: Optional[str] = "default"
 
